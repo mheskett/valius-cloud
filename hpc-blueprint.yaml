@@ -1,0 +1,100 @@
+blueprint_name: hpc-slurm
+
+vars:
+  project_id:  valius-hpc
+  deployment_name: valius-slurm1
+  region: us-west1
+  zone: us-west1-b
+
+deployment_groups:
+- group: primary
+  modules:
+  - id: network
+    source: modules/network/vpc
+
+  - id: private_service_access
+    source: community/modules/network/private-service-access
+    use: [network]
+
+  - id: homefs
+    source: modules/file-system/filestore
+    use: [network, private_service_access]
+    settings:
+      local_mount: /home
+
+  - id: debug_nodeset
+    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+    use: [network]
+    settings:
+      node_count_dynamic_max: 4
+      machine_type: n2-standard-2
+      allow_automatic_updates: false
+
+  - id: debug_partition
+    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+    use:
+    - debug_nodeset
+    settings:
+      partition_name: debug
+      ## exclusive false keeps the debug nodes always ON
+      exclusive: true
+      is_default: true
+
+  - id: compute_nodeset
+  source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+  use: [network]
+  settings:
+    node_count_dynamic_max: 10
+    machine_type: n2-standard-8
+    disk_size_gb: 50
+    disk_type: pd-balanced
+    image: projects/valius-hpc/global/images/bioinfo-image**
+    bandwidth_tier: gvnic_enabled
+    allow_automatic_updates: false
+
+  - id: compute_partition
+    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+    use:
+    - compute_nodeset
+    settings:
+      partition_name: compute
+
+  - id: h3_nodeset
+    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+    use: [network]
+    settings:
+      node_count_dynamic_max: 10
+      machine_type: h3-standard-22
+      disk_type: pd-balanced
+      bandwidth_tier: gvnic_enabled
+      allow_automatic_updates: false
+
+  - id: h3_partition
+    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+    use:
+    - h3_nodeset
+    settings:
+      partition_name: h3
+
+- id: slurm_login
+  source: community/modules/scheduler/schedmd-slurm-gcp-v6-login
+  use: [network]
+  settings:
+    machine_type: n2-standard-4
+    enable_login_public_ips: true
+    disk_type: pd-balanced          # or pd-ssd
+    disk_size_gb: 150               # or however large you want
+    image_family: ubuntu-2204-lts   # choose OS
+    image_project: ubuntu-os-cloud  # required for Ubuntu image
+
+  - id: slurm_controller
+    source: community/modules/scheduler/schedmd-slurm-gcp-v6-controller
+    use:
+    - network
+    - debug_partition
+    - compute_partition
+    - h3_partition
+    - homefs
+    - slurm_login
+    settings:
+      enable_controller_public_ips: true
