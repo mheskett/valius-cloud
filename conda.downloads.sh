@@ -69,6 +69,11 @@ cut -f1,2 GRCh38.primary_assembly.genome.fa.fai > chrom.sizes.txt
 ## dbSNP 
 wget https://ftp.ncbi.nlm.nih.gov/snp/latest_release/VCF/GCF_000001405.40.gz
 wget https://ftp.ncbi.nlm.nih.gov/snp/latest_release/VCF/GCF_000001405.40.gz.tbi
+##  For mapping Ensembl IDs to gene symbols:
+grep -v "^#" gencode.v44.annotation.gtf | awk '$3 == "gene"' | \
+awk -F'\t|; ' '{print $1, $9, $10, $11}' > ensembl_gene_symbols.txt
+
+
 
 #Download the GRCh38 Assembly Report:
 ## fix the naming conventions
