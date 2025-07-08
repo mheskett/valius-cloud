@@ -6,6 +6,11 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 
 # install certain conda environments
 
+# minimap2 for long reads
+conda create --name "for_minimap2"
+conda activate for_minimap2
+conda install bioconda::minimap2
+conda deactivate
 # BWA
 conda create --name "for_bwa"
 conda activate for_bwa
@@ -72,7 +77,13 @@ wget https://ftp.ncbi.nlm.nih.gov/snp/latest_release/VCF/GCF_000001405.40.gz.tbi
 ##  For mapping Ensembl IDs to gene symbols:
 grep -v "^#" gencode.v44.annotation.gtf | awk '$3 == "gene"' | \
 awk -F'\t|; ' '{print $1, $9, $10, $11}' > ensembl_gene_symbols.txt
-
+## make the star file
+STAR --runMode genomeGenerate \
+     --runThreadN 8 \
+     --genomeDir STAR_genome \
+     --genomeFastaFiles GRCh38.primary_assembly.genome.fa \
+     --sjdbGTFfile gencode.v44.annotation.gtf \
+     --sjdbOverhang 100
 
 
 #Download the GRCh38 Assembly Report:
