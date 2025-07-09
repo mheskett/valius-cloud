@@ -117,10 +117,8 @@ sudo apt-get update
 
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo docker run hello-world
-
-
-
-
-
-
-
+## install nextflow
+java -version                           # Check that Java v11+ is installed. i think java 17+ needs to be here
+curl -s https://get.nextflow.io | bash  # Download Nextflow
+chmod +x nextflow                       # Make executable
+mv nextflow ~/bin/                      # Add to user's $PATH. had to make ~/bin. do not use /bin/
